@@ -6,3 +6,4 @@ hbutils
 scipy
 tqdm
 di-toolkit
+pyarrow
