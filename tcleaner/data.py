@@ -97,4 +97,28 @@ class TagData:
         df_tags = df_tags.sort_values(by=['count', 'name'], ascending=[False, True])
         self.df_tags = df_tags
         logging.info(f'{plural_word(len(df_tags), "tag")} in total:\n{df_tags}')
-        return self
+        return TagData(
+            df_table=self.df_table,
+            df_tags=df_tags,
+        )
+
+    def clean_tags_in_table(self, recalculate_tags: bool = True) -> 'TagData':
+        existing_tags = set(self.df_tags['name'])
+        table = []
+        logging.info('Scanning table for tags cleaning ...')
+        for _, item in tqdm(self.df_table.iterrows(), total=len(self.df_table), desc='Scan Table'):
+            d_item = item.to_dict()
+            tags = [tag for tag in d_item['tags'] if tag in existing_tags]
+            table.append({**d_item, 'tags': tags})
+
+        logging.info('Re-making table ...')
+        df_table = pd.DataFrame(table)
+        df_table = df_table.sort_values(by=['id'], ascending=[False])
+        logging.info(f'{plural_word(len(df_table), "sample")} in total:\n{df_table}')
+        retval = TagData(
+            df_table=df_table,
+            df_tags=self.df_tags,
+        )
+        if recalculate_tags:
+            retval = retval.recalculate_tags()
+        return retval
